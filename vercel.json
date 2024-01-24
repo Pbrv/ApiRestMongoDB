@@ -2,7 +2,7 @@
     "version": 2,
     "builds": [
         {
-            "src": "*.py",
+            "src": "app.py",
             "use": "@vercel/python"
         }
     ],
@@ -11,5 +11,8 @@
             "src": "(.*)",
             "dest": "app.py"
         }
-    ]
+    ],
+    "env": {
+        "MONGODB_HOST": "cluster0.gf1lwbd.mongodb.net"
+    }
 }
