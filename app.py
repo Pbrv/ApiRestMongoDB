@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, Response, send_file
+from flask import Flask, request, jsonify, Response, send_file, send_from_directory
 from flask_pymongo import PyMongo
 from bson import json_util, Binary
 from bson.objectid import ObjectId
@@ -12,10 +12,13 @@ def crear_producto():
     nombreProducto = request.form.get('nombreProducto')
     stock = request.form.get('stock')
     fecha = request.form.get('fecha')
+    categoria = request.form.get('categoria')
     imagen = request.files.get('imagen')
     
-    if not nombreProducto or not stock or not fecha or not imagen:
+    if not nombreProducto or not stock or not fecha or not categoria or not imagen:
         return datos_incompletos()
+    if not categoria_valida(categoria):
+        return categoria_invalida()
     
     # Leer la imagen como en binario
     with imagen.stream as image_stream:
@@ -25,23 +28,34 @@ def crear_producto():
         'nombreProducto': nombreProducto, 
         'stock': stock, 
         'fecha': fecha,
-        'imagen': Binary(binary_data)})
+        'categoria': categoria, #########
+        'imagen': imagen.filename,
+        'imagen_binario': Binary(binary_data)})
 
     response = {
             'nombreProducto': nombreProducto,
             'stock': stock,
             'fecha': fecha,
-            'imagen_id': str(id)
+            'categoria': categoria,
+            'imagen_nombre': imagen.filename
     }
     return response
+
+def categoria_valida(categoria):
+    return categoria in ['funko', 'pelicula', 'comic']
 
 @app.route('/productos', methods=['GET'])
 def consultar_productos():
     productos = mongo.db.products.find()
     productos_converted = []
+
     for producto in productos:
         producto['_id'] = str(producto['_id'])
-        productos_converted.append(producto)
+
+        # Filtrar los campos para excluir el binario
+        producto_filtered = {key: value for key, value in producto.items() if not isinstance(value, bytes)}
+        
+        productos_converted.append(producto_filtered)
 
     response = json_util.dumps(productos_converted)
 
@@ -120,6 +134,14 @@ def not_found(error=None):
 def datos_incompletos(error=None):
     response = jsonify({
         'mensaje': 'Datos incompletos', 
+        'status': 400
+    })
+    response.status_code = 400
+
+    return response
+def categoria_invalida(error=None):
+    response = jsonify({
+        'mensaje': 'La categoría del producto no es válida. Solo puede ser Funko, Película o Comic', 
         'status': 400
     })
     response.status_code = 400
