@@ -114,9 +114,9 @@ def actualizar_registro(id):
 def obtener_imagen(id):
     producto = mongo.db.products.find_one({'_id': ObjectId(id)})
 
-    if producto and 'imagen' in producto:
+    if producto and 'imagen_binario' in producto:
         # Obtener los datos binarios de la imagen y devolverla como respuesta
-        return send_file(io.BytesIO(producto['imagen']), mimetype='image/jpeg')
+        return send_file(io.BytesIO(producto['imagen_binario']), mimetype='image/jpeg')
     else:
         return not_found()
 
